@@ -4,12 +4,22 @@
 {% block content %}
     
 <div class="essay-critera-container">
-    <div class="essay-container">
-        {% csrf_token %}
-        <div class="textbox" contenteditable=true placeholder="Gradesy will score your essay. Start by writing or pasting here and then press the 'Score Essay' button."></div>
-        
-        <button class="button">Score Essay</button>
+    <div class="topic-essay-container">
+        <div class="topic-container">
+            <div class="textbox-topic" contenteditable=true placeholder="Enter keywords of your essay topic here (eg. computer, information in modern world"></div>
+        </div>
+
+        <div class="essay-container">
+            {% csrf_token %}
+            <div class="textbox" contenteditable=true placeholder="Enter your essay here by writing or pasting it, then press the 'Score Essay' button to have Gradesy grade it."></div>
+            
+            <div class="word-counter-button-container">
+                <div class="words-js">0 word</div>
+                <button class="button disabled">Score Essay</button>
+            </div>
+        </div>
     </div>
+
     
     <div class="criteria-container" style="display: none">
         <div class="criteria-name-score-container">
@@ -106,6 +116,27 @@
 </div>
 
 <script>
+    // Count number of words as user types
+    var wordOrWords = "word";
+    $(document).keyup(function(e) {
+        var essayText = $('.textbox').text();
+
+        var numOfWords = essayText.trim().split(/\s+/).length;
+        
+        if (numOfWords > 1) {
+            wordOrWords = "words";
+        } else {
+            wordOrWords = "word";
+        }
+
+        if (essayText == '') {
+            numOfWords = 0;
+        }
+        $('.words-js').html(numOfWords + ' ' + wordOrWords);
+    });
+
+    
+
     root = document.documentElement;
     root.style.setProperty('--degree', 135 + "deg"); 
 

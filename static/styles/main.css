@@ -113,10 +113,52 @@ nav {
     margin-right: 20px;
 }
 
+/***TOPIC ESSAY CONTAINER****/
+.topic-essay-container {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+/****TOPIC CONTAINER***/
+.topic-container {
+    width: 810px;
+    min-height: 75px;
+    height: max-content;
+
+    background-color: var(--white);
+
+    padding: 30px 25px;
+
+    box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.12);
+    border-radius: 5px;
+
+    margin-bottom: 40px;
+}
+
+.textbox-topic {
+    font-family: "Hind Vadodara";
+    text-align: justify;
+    font-size: 18px;
+    font-weight: 500;
+    line-height: 26px;
+    color: var(--text-primary);
+    width: 100%;
+    background-color: initial;
+    border: none;
+
+    outline: none;
+}
+
+.textbox-topic[contenteditable=true]:empty:not(:focus):before {
+    content: attr(placeholder);
+    color: var(--text-placeholder);
+}
+
 /*****ESSAY CONTAINER*****/
 .essay-container {
     width: 810px;
-    min-height: 615px;
+    min-height: 500px;
     height: max-content;
 
     background-color: var(--white);
@@ -149,30 +191,49 @@ nav {
     color: var(--text-placeholder);
 }
 
+.word-counter-button-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    
+    position: absolute;
+    bottom: 20px;
+
+    width: calc(100% - 50px);
+}
+
+.word-counter-button-container > div:first-child {
+    font-weight: 500;
+    font-size: 14px;
+}
 .button {
     font-family: 'Hind Vadodara';
     font-size: 18px;
     font-weight: 700;
 
     letter-spacing: 0.1px;
-    position: absolute;
-    width: calc(100% - 50px);
-    bottom: 20px;
 
     background-color: var(--primary);
     color: var(--white);
     border: none;
     border-radius: 20px;
-    padding: 6px 16px;
+    padding: 6px 18px;
     cursor: pointer;
     transition: all 0.2s ease 0s;
 }
 
 .button:hover {
-    color: var(--white);
     background-color: #d64d46;
 }
 
+.disabled {
+    cursor: default; 
+    background-color: #f16f66;
+}
+
+.disabled:hover {
+    background-color: #f16f66;
+}
 
 /****CRITERIA CONTAINER*****/
 .criteria-container {
@@ -250,6 +311,8 @@ nav {
 }
 
 /***CRITERIA CONTAINER SKELETON*****/
+
+
 .criteria-container-skeleton {
     height: 615px;
     width: 370px;
@@ -272,9 +335,21 @@ nav {
     margin-top: 20px;
 }
 
+@keyframes blinker {
+    0% {
+      background-color: #fdfdfd;
+    }
+
+    100% {
+        background-color: #f5f5f5;
+    }
+}
+
 .row-between > div {
     background-color: var(--background);
     border-radius: 5px;
+
+    animation: blinker 1s linear infinite alternate;
 }
 
 .row-between > div:first-child {
@@ -294,6 +369,8 @@ nav {
     margin-top: 8px;
 
     border-radius: 20px;
+
+    animation: blinker 1s linear infinite alternate;
 }
 
 .criteria-container-skeleton > div:nth-child(7) {
@@ -304,6 +381,8 @@ nav {
     border-radius: 5px;
 
     margin-top: 70px;
+
+    animation: blinker 1s linear infinite alternate;
 }
 
 .circle-wrap-skeleton {
@@ -314,6 +393,8 @@ nav {
 
     margin: 0 auto;
     margin-top: 7px;
+
+    animation: blinker 1s linear infinite alternate;
 }
 
 .circle-wrap-skeleton .inside-circle-skeleton {
@@ -338,6 +419,8 @@ nav {
     background-color: var(--background);
 
     margin-top: 7px;
+
+    animation: blinker 1s linear infinite alternate;
 }
 
 .inside-circle-skeleton > div:first-child {
@@ -349,6 +432,8 @@ nav {
     width: 80px;
     margin-top: 7px;
     background-color: var(--background);
+
+    animation: blinker 1s linear infinite alternate;
 }
 
 
