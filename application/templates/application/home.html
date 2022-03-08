@@ -15,7 +15,7 @@
             
             <div class="word-counter-button-container">
                 <div class="words-js">0 word</div>
-                <button class="button disabled">Score Essay</button>
+                <div class="button disabled">Score Essay</div>
             </div>
         </div>
     </div>
@@ -30,7 +30,7 @@
                     <div class="tooltip-text">Relevance to topic, richness of ideas</div>
                 </div>
             </div>
-            <div>25/100</div>
+            <div class="content-score-js"></div>
         </div>
         <div class="bar-container">
             <div class="bar-content"></div>
@@ -44,7 +44,7 @@
                     <div class="tooltip-text">Spelling, punctuation, capitalization, and paragraphing</div>
                 </div>
             </div>
-            <div>50/100</div>
+            <div class="mechanics-score-js"></div>
         </div>
         <div class="bar-container">
             <div class="bar-mechanics"></div>
@@ -58,7 +58,7 @@
                     <div class="tooltip-text">Grammatical mistakes</div>
                 </div>
             </div>
-            <div>50/100</div>
+            <div class="grammar-score-js"></div>
         </div>
         <div class="bar-container">
             <div class="bar-grammar"></div>
@@ -75,7 +75,7 @@
                     <div class="fill"></div>
                 </div>
                 <div class="inside-circle"> 
-                    <div>42</div>
+                    <div class="final-grade-js"></div>
                     <div></div>
                     <div>100</div>
                 </div>
@@ -133,20 +133,36 @@
             numOfWords = 0;
         }
         $('.words-js').html(numOfWords + ' ' + wordOrWords);
+
+        // Check if there are text inputs already
+        if ($('.textbox').text() != "" && $('.textbox-topic').text() != "") {
+            // Enable button
+            $('.button').removeClass('disabled');
+        } else {
+            // Disbale button
+            $('.button').addClass('disabled');
+        }
     });
 
-    
+    ///////////////////////////////////////////////////////
 
     root = document.documentElement;
-    root.style.setProperty('--degree', 135 + "deg"); 
+
+    var mechanicsScore = 0;
+    var contentScore = 0;
+    var grammarScore = 0;
 
     $('.button').click(function() {
         // If no input, stop execution of function
-        if ($('.textbox').html() === "") {
-            alert("No input essay");
+        if ($('.textbox-topic').html() === "") {
             return;
         }
-        
+
+        if ($('.textbox').html() === "") {
+            return;
+        }
+
+
         // Continue execution
         // Send essay to backend
         var essay = $('.textbox').text();
@@ -158,17 +174,76 @@
             method: "POST",
             data: {'essay': essay, csrfmiddlewaretoken: '{{ csrf_token }}'},
             success: function(response) {
-                //alert('input sent successfully');
+                //alert('input sent successfully')
+                // Get score from backend to frontend
+                $.ajax({
+                    url: "{% url 'get_score' %}",
+                    method: "GET",
+                    dataType: 'json',
+                    success: function(response) {
+                        mechanicsScore = response[0];
+                        contentScore = 40;
+                        grammarScore = response[1];
+                    
+                        //alert("Done");
+                        // Criteria Grade
+                         $('.mechanics-score-js').html((mechanicsScore + "/100"));
+                         root.style.setProperty('--bar-mechanics', mechanicsScore + "%");
+
+                         $('.content-score-js').html((contentScore + "/100"));
+                         root.style.setProperty('--bar-content', contentScore + "%");
+
+                         $('.grammar-score-js').html((grammarScore + "/100"));
+                         root.style.setProperty('--bar-grammar', grammarScore + "%");
+
+                         // Final Grade
+                         avgScores = Math.ceil(((mechanicsScore + contentScore + grammarScore)/3));
+                         $('.final-grade-js').html((avgScores));
+
+                         degree = (((avgScores/100)*360)/2);
+                         root.style.setProperty('--degree', degree + "deg"); 
+
+                         updateGrade();
+                    },  
+                    error: function(err) {
+                        console.log(err);
+                    }
+                });
             },
             error: function(err) {
                 console.log(err);
             }
         });
 
+        // Start criteria card blinker
+        root.style.setProperty('--blinker-zero', '#fdfdfd');
+        root.style.setProperty('--blinker-hundred', '#f5f5f5');
+
+
+        // Replace button text with spinner
+        $('.button').html(
+            `<div class="spinner"></div>`
+        );
+
+        $('.criteria-container-skeleton').css("display", "block");
+        $('.criteria-container').css("display", "none");
+
+    }); // End button click
+
+
+    function updateGrade() {
         // Load grade
         $('.criteria-container-skeleton').css("display", "none");
         $('.criteria-container').css("display", "block");
-    });
+
+        // Replace spinner with text
+        $('.button').html('Score Essay');
+
+        // End criteria card blinker
+        root.style.setProperty('--blinker-zero', '#f5f5f5');
+        root.style.setProperty('--blinker-hundred', '#f5f5f5');
+    }
+
 </script>
 
 {% endblock content %}
