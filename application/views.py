@@ -1,3 +1,4 @@
+from lib2to3.pgen2 import token
 from django.shortcuts import render
 from django.http import HttpResponse, JsonResponse
 from django.core import serializers
@@ -8,6 +9,7 @@ import pickle
 import nltk
 from nltk import word_tokenize
 from nltk.corpus import stopwords
+from nltk.stem import WordNetLemmatizer
 import re
 from spellchecker import SpellChecker
 import language_tool_python
@@ -15,6 +17,11 @@ import language_tool_python
 nltk.download('stopwords')
 nltk.download('punkt')
 nltk.download('averaged_perceptron_tagger')
+nltk.download('wordnet')
+nltk.download('omw-1.4')
+
+import spacy
+
 
 # Create your views here.
 
@@ -27,6 +34,7 @@ def process_essay(request):
     scores.clear() # Reset value
     # unpack request from front end:
     input_essay = request.POST['essay']
+    input_topic = request.POST['topic']
 
 
     # Clean Essay
@@ -39,24 +47,29 @@ def process_essay(request):
     avg_word_len1 = avg_word_len(input_essay)
     spell_err_count1 = spell_err_count(clean_essay_text)
 
+    print()
+    print('------ EXTRACTED FEATURES FOR MECHANICS CRITERIA ------')
     print('Character count:', char_count)
     print('Word count:', word_count)
     print('Sentence count:', sent_count)
     print('Average word length:', avg_word_len1)
     print('Spelling error count:', spell_err_count1)
+    print('-------------------------------------------------------')
+    print()
 
-    print('--------------------------------')
-
+    
     # Feature Extraction - Grammar
     noun_count, verb_count, adj_count, adv_count = count_pos(input_essay)
     grammar_err_count1 = grammar_err_count(input_essay)
     
+    print('------ EXTRACTED FEATURES FOR LANGUAGE USE CRITERIA ------')
     print('Noun count:', noun_count)
     print('Verb count:', verb_count)
     print('Adjective count:', adj_count)
     print('Adverb count:', adv_count)
     print('Grammar error count:', grammar_err_count1)
-
+    print('----------------------------------------------------------')
+    print()
 
     # load xgb_mechanics.pkl
     xgb_mechanics = pickle.load(open('ml/xgb_mechanics.pkl', "rb"))
@@ -68,14 +81,60 @@ def process_essay(request):
     # Predict Grammar Score
     prediction_grammar = xgb_grammar.predict([[noun_count, verb_count, adj_count, adv_count, grammar_err_count1]])
 
+
+
+    # Content criteria
+    # Preprocess topic and essay
+    input_topic = remove_puncs(input_topic)
+    input_topic = tokenize(input_topic)
+    input_topic = remove_stopwords(input_topic)
+    input_topic = lemmatize(input_topic)
+
+    input_essay = remove_puncs(input_essay)
+    input_essay = tokenize(input_essay)
+    input_essay = remove_stopwords(input_essay)
+    input_essay = lemmatize(input_essay)
+
+    # the above input_topic is list, convert it to sentence form
+    input_topic = ' '.join(word for word in input_topic)
+    input_essay = ' '.join(word for word in input_essay)
+
+    print('------ INPUT TOPIC AFTER PREPROCESSING ------')
+    print(input_topic)
+    print()
+    print('------ INPUT ESSAY AFTER PREPROCESSING ------')
+    print(input_essay)
+    print('---------------------------------------------')
+    print()
+
+    # Compute cosine similarity
+    nlp = spacy.load('en_core_web_sm')
+    text_one = nlp(input_topic)
+    text_two = nlp(input_essay)
+
+    cos_similarity = text_one.similarity(text_two)
+    print('---------------------------------------------')
+    print('Cosine Similarity: ', cos_similarity)
+    print('---------------------------------------------')
+    print()
+
+
+
+    # Finalize
+    print('--------------- FINAL GRADE ----------------')
+    content_score = int(float(cos_similarity*100))
+    print('Content score:', content_score)
     mechanics_score = int(float(prediction_mechanics[0])*10)
     print("Mechanics score:", mechanics_score)
     grammar_score = int(float(prediction_grammar[0])*10)
-    print("Grammar score:", grammar_score)
+    print("Language Use score:", grammar_score)
+    print('--------------------------------------------')
+    print()
 
     # Append to scores list
     scores.append(mechanics_score) 
     scores.append(grammar_score) 
+    scores.append(content_score)
 
     # Pack response for POST Ajax (required)
     response = {
@@ -171,6 +230,26 @@ def count_pos(essay):
     return noun_count, verb_count, adj_count, adverb_count
 
 def grammar_err_count(essay):
-  tool = language_tool_python.LanguageTool('en-US')
-  matches = tool.check(essay)
-  return len(matches)
+    tool = language_tool_python.LanguageTool('en-US')
+    matches = tool.check(essay)
+    return len(matches)
+
+
+############# Preprocessing - Content ###########
+def lemmatize(tokens):
+    lemmatized_tokens = []
+    lemmatizer = WordNetLemmatizer()
+
+    for w in tokens:
+        lemmatized_tokens.append(lemmatizer.lemmatize(w))
+
+    return lemmatized_tokens
+
+def tokenize(text):
+    tokenized_text = word_tokenize(text)
+    return tokenized_text
+
+def remove_stopwords(tokens):
+    filtered_words = [word.lower() for word in tokens if word not in stopwords.words('english')]
+
+    return filtered_words

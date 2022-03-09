@@ -172,6 +172,8 @@ nav {
     border-radius: 5px;
 
     position: relative;
+
+    margin-bottom: 40px;
 }
 
 .textbox {
@@ -237,11 +239,11 @@ nav {
 
 .disabled {
     cursor: default; 
-    background-color: #f16f66;
+    background-color: #f78179;
 }
 
 .disabled:hover {
-    background-color: #f16f66;
+    background-color: #f78179;
 }
 
 .spinner {

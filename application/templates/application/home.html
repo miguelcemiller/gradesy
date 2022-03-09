@@ -6,12 +6,12 @@
 <div class="essay-critera-container">
     <div class="topic-essay-container">
         <div class="topic-container">
-            <div class="textbox-topic" contenteditable=true placeholder="Enter keywords of your essay topic here (eg. computer, information in modern world"></div>
+            <div id='editable' class="textbox-topic" contenteditable=true placeholder="Enter the topic of your essay. Include as many keywords as possible."></div>
         </div>
 
         <div class="essay-container">
             {% csrf_token %}
-            <div class="textbox" contenteditable=true placeholder="Enter your essay here by writing or pasting it, then press the 'Score Essay' button to have Gradesy grade it."></div>
+            <div id='editable2' class="textbox" contenteditable=true placeholder="Enter your essay here by writing or pasting it, then press the 'Score Essay' button to have Gradesy grade it."></div>
             
             <div class="word-counter-button-container">
                 <div class="words-js">0 word</div>
@@ -27,7 +27,7 @@
                 <div>CONTENT</div>
                 <div class="tooltip">
                     <img src="{% static 'images/help.svg' %}">
-                    <div class="tooltip-text">Relevance to topic, richness of ideas</div>
+                    <div class="tooltip-text">Relevance of the essay to the topic</div>
                 </div>
             </div>
             <div class="content-score-js"></div>
@@ -41,7 +41,7 @@
                 <div>MECHANICS</div>
                 <div class="tooltip">
                     <img src="{% static 'images/help.svg' %}">
-                    <div class="tooltip-text">Spelling, punctuation, capitalization, and paragraphing</div>
+                    <div class="tooltip-text">Spelling and essay general statistics</div>
                 </div>
             </div>
             <div class="mechanics-score-js"></div>
@@ -52,10 +52,10 @@
     
         <div class="criteria-name-score-container">
             <div class="name-question-container">
-                <div>GRAMMAR</div>
+                <div>LANGUAGE USE</div>
                 <div class="tooltip">
                     <img src="{% static 'images/help.svg' %}">
-                    <div class="tooltip-text">Grammatical mistakes</div>
+                    <div class="tooltip-text">Complex constructions and grammar</div>
                 </div>
             </div>
             <div class="grammar-score-js"></div>
@@ -116,6 +116,21 @@
 </div>
 
 <script>
+    /*
+    var editable = document.getElementById('editable');
+    var editable2 = document.getElementById('editable2');
+
+    editable.addEventListener('input', function(event) {
+        editable.innerText = event.target.innerText;
+    });
+
+    editable2.addEventListener('input', function(event) {
+        editable2.innerText = event.target.innerText;
+    });
+    */
+
+
+
     // Count number of words as user types
     var wordOrWords = "word";
     $(document).keyup(function(e) {
@@ -164,7 +179,8 @@
 
 
         // Continue execution
-        // Send essay to backend
+        // Send topic and essay to backend
+        var topic= $('.textbox-topic').text();
         var essay = $('.textbox').text();
 
         console.log(essay);
@@ -172,7 +188,7 @@
         $.ajax({
             url: "{% url 'process_essay' %}",
             method: "POST",
-            data: {'essay': essay, csrfmiddlewaretoken: '{{ csrf_token }}'},
+            data: {'topic': topic, 'essay': essay, csrfmiddlewaretoken: '{{ csrf_token }}'},
             success: function(response) {
                 //alert('input sent successfully')
                 // Get score from backend to frontend
@@ -182,7 +198,7 @@
                     dataType: 'json',
                     success: function(response) {
                         mechanicsScore = response[0];
-                        contentScore = 40;
+                        contentScore = response[2];
                         grammarScore = response[1];
                     
                         //alert("Done");
