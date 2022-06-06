@@ -5,251 +5,107 @@ from django.core import serializers
 from django.http import JsonResponse
 import json
 
-import pickle
-import nltk
-from nltk import word_tokenize
-from nltk.corpus import stopwords
-from nltk.stem import WordNetLemmatizer
-import re
-from spellchecker import SpellChecker
-import language_tool_python
-
-nltk.download('stopwords')
-nltk.download('punkt')
-nltk.download('averaged_perceptron_tagger')
-nltk.download('wordnet')
-nltk.download('omw-1.4')
-
-import spacy
-
-
+from . models import Data
 # Create your views here.
 
 def home_view(request):
     return render(request, 'application/home.html')
 
+def results_view(request):
+    data = Data.objects.get(username='admin')
 
-scores = []
-def process_essay(request):
-    scores.clear() # Reset value
-    # unpack request from front end:
-    input_essay = request.POST['essay']
-    input_topic = request.POST['topic']
+    essay = data.essay
+    context = {'essay': essay}
+    return render(request, 'application/results.html', context)
 
+def check_essay(request):
+    essay = request.POST['essay']
 
-    # Clean Essay
-    clean_essay_text = clean_essay(input_essay)
-
-    # Feature Extraction - Mechanics
-    char_count = noOfChar(input_essay)
-    word_count = noOfWords(input_essay)
-    sent_count = noOfSent(input_essay)
-    avg_word_len1 = avg_word_len(input_essay)
-    spell_err_count1 = spell_err_count(clean_essay_text)
-
-    print()
-    print('------ EXTRACTED FEATURES FOR MECHANICS CRITERIA ------')
-    print('Character count:', char_count)
-    print('Word count:', word_count)
-    print('Sentence count:', sent_count)
-    print('Average word length:', avg_word_len1)
-    print('Spelling error count:', spell_err_count1)
-    print('-------------------------------------------------------')
-    print()
-
+    plagiarised_words, plagiarism_score = plagiarism(essay)
+    #print('Plagiarised words: ', plagiarised_words)
+    print('Plagiarism Score: ', plagiarism_score)
     
-    # Feature Extraction - Grammar
-    noun_count, verb_count, adj_count, adv_count = count_pos(input_essay)
-    grammar_err_count1 = grammar_err_count(input_essay)
-    
-    print('------ EXTRACTED FEATURES FOR LANGUAGE USE CRITERIA ------')
-    print('Noun count:', noun_count)
-    print('Verb count:', verb_count)
-    print('Adjective count:', adj_count)
-    print('Adverb count:', adv_count)
-    print('Grammar error count:', grammar_err_count1)
-    print('----------------------------------------------------------')
-    print()
+    # update data in user Data
+    user = Data.objects.get(username='admin')
+    user.plagiarised_words = plagiarised_words
+    user.plagiarism_score = plagiarism_score
+    user.essay = essay
+    user.save()
 
-    # load xgb_mechanics.pkl
-    xgb_mechanics = pickle.load(open('ml/xgb_mechanics.pkl', "rb"))
-    # load xgb_grammar.pkl
-    xgb_grammar = pickle.load(open('ml/xgb_grammar.pkl', "rb"))
-
-    # Predict Mechanics Score
-    prediction_mechanics = xgb_mechanics.predict([char_count, word_count, sent_count, avg_word_len1, spell_err_count1])
-    # Predict Grammar Score
-    prediction_grammar = xgb_grammar.predict([[noun_count, verb_count, adj_count, adv_count, grammar_err_count1]])
-
-
-
-    # Content criteria
-    # Preprocess topic and essay
-    input_topic = remove_puncs(input_topic)
-    input_topic = tokenize(input_topic)
-    input_topic = remove_stopwords(input_topic)
-    input_topic = lemmatize(input_topic)
-
-    input_essay = remove_puncs(input_essay)
-    input_essay = tokenize(input_essay)
-    input_essay = remove_stopwords(input_essay)
-    input_essay = lemmatize(input_essay)
-
-    # the above input_topic is list, convert it to sentence form
-    input_topic = ' '.join(word for word in input_topic)
-    input_essay = ' '.join(word for word in input_essay)
-
-    print('------ INPUT TOPIC AFTER PREPROCESSING ------')
-    print(input_topic)
-    print()
-    print('------ INPUT ESSAY AFTER PREPROCESSING ------')
-    print(input_essay)
-    print('---------------------------------------------')
-    print()
-
-    # Compute cosine similarity
-    nlp = spacy.load('en_core_web_sm')
-    text_one = nlp(input_topic)
-    text_two = nlp(input_essay)
-
-    cos_similarity = text_one.similarity(text_two)
-    print('---------------------------------------------')
-    print('Cosine Similarity: ', cos_similarity)
-    print('---------------------------------------------')
-    print()
-
-
-
-    # Finalize
-    print('--------------- FINAL GRADE ----------------')
-    content_score = int(float(cos_similarity*100))
-    print('Content score:', content_score)
-    mechanics_score = int(float(prediction_mechanics[0])*10)
-    print("Mechanics score:", mechanics_score)
-    grammar_score = int(float(prediction_grammar[0])*10)
-    print("Language Use score:", grammar_score)
-    print('--------------------------------------------')
-    print()
-
-    # Append to scores list
-    scores.append(mechanics_score) 
-    scores.append(grammar_score) 
-    scores.append(content_score)
-
-    # Pack response for POST Ajax (required)
-    response = {
-        'essay' : input_essay,
-    }
-
+    response = {'success' : 'success'}
     return JsonResponse(response)
 
-def get_score(request):
-    print(scores)
-    response = json.dumps(scores)
-    return HttpResponse(response, content_type="application/json")
+def get_data(request):
+    data = Data.objects.get(username='admin')
 
+    print(data.plagiarised_words)
+    data = {'plagiarised_words': data.plagiarised_words, 'plagiarism_score': data.plagiarism_score}
+   # if data:
+   #     response = json.loads(data)
+   # else:
+   #     response = []
 
-def remove_puncs(essay): # Remove punctuations
-    essay = re.sub("[^A-Za-z ]"," ",essay)
-    return essay
-
-
-def clean_essay(essay):
-    essay2 = remove_puncs(essay)
-    return essay2
+    return JsonResponse(data, status=200)
 
 
 
-############## Feature Extaction - Mechanics ##################
-def sent2word(x):
-    x=re.sub("[^A-Za-z0-9]"," ",x)
-    words=nltk.word_tokenize(x)
-    return words
+def plagiarism(essay):
+    import re
+    import nltk
+    nltk.download('punkt')
+    from nltk.util import ngrams, pad_sequence, everygrams
+    from nltk.tokenize import word_tokenize
+    from nltk.lm import MLE, WittenBellInterpolated
+    import numpy as np
 
-def essay2word(essay):
-    essay = essay.strip()
-    tokenizer = nltk.data.load('ml/english.pickle')
-    raw = tokenizer.tokenize(essay)
-    final_words=[]
-    for i in raw:
-        if(len(i)>0):
-            final_words.append(sent2word(i))
-    return final_words
-        
+    # Training data file
+    train_data_file = "./ml/plagiarism/train_data.txt"
 
-def noOfWords(essay):
-    count=0
-    for i in essay2word(essay):
-        count=count+len(i)
-    return count
+    # read training data
+    with open(train_data_file) as f:
+        train_text = f.read().lower()
 
-def noOfChar(essay):
-    count=0
-    for i in essay2word(essay):
-        for j in i:
-            count=count+len(j)
-    return count
+    # apply preprocessing (remove text inside square and curly brackets and rem punc)
+    train_text = re.sub(r"\[.*\]|\{.*\}", "", train_text)
+    train_text = re.sub(r'[^\w\s]', "", train_text)
 
-def noOfSent(essay):
-    return len(essay2word(essay))
+    # set ngram number
+    n = 4
 
-def avg_word_len(essay):
-    return noOfChar(essay)/noOfWords(essay)
-
-def spell_err_count(essay):
-    tokens = word_tokenize(essay)
-
-    spell = SpellChecker()
+    # pad the text and tokenize
+    training_data = list(pad_sequence(word_tokenize(train_text), n, pad_left=True, left_pad_symbol="<s>"))
     
-    # find those words that may be misspelled
-    misspelled = spell.unknown(tokens)
-    if len(misspelled) == 0:
-        return 0
-    else:
-        return len(misspelled)
+    # generate ngrams
+    ngrams = list(everygrams(training_data, max_len=n))
 
-############# Feature Extraction - Grammar ###########
-def count_pos(essay):
-    sentences = essay2word(essay)
-    noun_count=0
-    adj_count=0
-    verb_count=0
-    adverb_count=0
-    for i in sentences:
-        pos_sentence = nltk.pos_tag(i)
-        for j in pos_sentence:
-            pos_tag = j[1]
-            if(pos_tag[0]=='N'):
-                noun_count+=1
-            elif(pos_tag[0]=='V'):
-                verb_count+=1
-            elif(pos_tag[0]=='J'):
-                adj_count+=1
-            elif(pos_tag[0]=='R'):
-                adverb_count+=1
-    return noun_count, verb_count, adj_count, adverb_count
+    # build ngram language models
+    model = WittenBellInterpolated(n)
+    model.fit([ngrams], vocabulary_text=training_data)
 
-def grammar_err_count(essay):
-    tool = language_tool_python.LanguageTool('en-US')
-    matches = tool.check(essay)
-    return len(matches)
+    # Read testing data
+    test_text = essay.lower()
+    test_text = re.sub(r'[^\w\s]', "", test_text)
 
+    # Tokenize and pad the text
+    testing_data = list(pad_sequence(word_tokenize(test_text), n, pad_left=True, left_pad_symbol="<s>"))
+   
+    # assign scores
+    scores = []
+    plagiarised_words = []
+    for i, item in enumerate(testing_data[n-1:]):
+        s = model.score(item, testing_data[i:i+n-1])
+        if s > 0.4:
+            s = 1.0
+            plagiarised_words.append(item)
+        print('i:', i, 'item:', item, 'history: ', testing_data[i:i+n-1], 'Score', s, 'smt: ', testing_data[i:i+n])
+            
+        scores.append(s)
+    
+    # Average Plagiarism score
+    average = round((sum(scores) / len(scores)) * 100)
 
-############# Preprocessing - Content ###########
-def lemmatize(tokens):
-    lemmatized_tokens = []
-    lemmatizer = WordNetLemmatizer()
+    # Reverse Score
+    plagiarism_score = average
+    #print('Average Plagiarism score: ', plagiarism_score)
 
-    for w in tokens:
-        lemmatized_tokens.append(lemmatizer.lemmatize(w))
-
-    return lemmatized_tokens
-
-def tokenize(text):
-    tokenized_text = word_tokenize(text)
-    return tokenized_text
-
-def remove_stopwords(tokens):
-    filtered_words = [word.lower() for word in tokens if word not in stopwords.words('english')]
-
-    return filtered_words
+    return plagiarised_words, plagiarism_score

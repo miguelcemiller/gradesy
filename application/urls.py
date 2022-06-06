@@ -4,8 +4,8 @@ from . import views
 from django.views.generic import RedirectView
 
 urlpatterns = [
-    path('', RedirectView.as_view(pattern_name='home')),
-    path('home', views.home_view, name='home'),
-    path('essay', views.process_essay, name='process_essay'),
-    path('score', views.get_score, name='get_score'),
+    path('', views.home_view, name='home'),
+    path('results', views.results_view, name='results'),
+    path('/check_essay', views.check_essay, name='check_essay'),
+    path('/get_data', views.get_data, name='get_data'),
 ]

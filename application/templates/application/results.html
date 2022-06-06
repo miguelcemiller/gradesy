@@ -1,0 +1,205 @@
+{% extends 'main.html' %}
+{% load static %}
+
+{% block content %}
+
+
+<div class="container">
+    {% include 'navbar.html' %}
+
+    <section class="results">
+        <div class="results-header">
+            <div id='grammar-head' class="criteria-header">Grammar</div>
+            <div id='mechanics-head' class="criteria-header">Mechanics</div>
+            <div id='content-head' class="criteria-header">Content</div>
+            <div id='style-head' class="criteria-header">Style</div>
+            <div id='plagiarism-head' class="criteria-header">Plagiarism</div>
+            <div id='vocabulary-head' class="criteria-header">Vocabulary</div>
+        </div>
+
+        <div class="results-content-criteria">
+            <div class="results-rating-comments-container">
+                <div class="results-content-heading rch-rating">RATING</div>
+                <div class="rating-container">
+                    <div class="rating-word rating-word-js">Very good</div>
+                    <div class="progress-bar-container">
+                        <div class="progress-bar"></div>
+                    </div>
+                    <div class="rating-percent"><span class="rating-number-js">96</span>%</div>
+                </div>
+                <div class="results-content-heading rch-comments">COMMENTS</div>
+                <div class="comment-word">
+        
+                </div>
+            </div>
+
+            <div class="results-person">
+                <img src="{% static 'images/person-4.svg' %}" draggable="false">
+            </div>
+        </div>
+
+        <div class="results-average">
+            <div style="margin-bottom: 25px; margin-left: 8px;">The essay's grade is</div>
+            <div class="flag-container">
+                <div class="average-grade-container">
+                    <div class="average-grade-container-two">
+                        <div class="average-grade"><span class="average-score-js">96</span>%</div>
+                        <img src="{% static 'images/flagpole.svg' %}" draggable="false" style="display: block;">
+                    </div>
+                </div>
+                <img src="{% static 'images/triangle-3.svg' %}" draggable="false">
+            </div>
+        </div>
+
+        <div class="button-container">
+            <div class="button-hover-background" style="background-color: var(--primary); width: 600px;">
+                <div class="button primary-button">Thank you!</div>
+            </div>    
+        </div>
+
+    </section>
+
+</div>
+
+<script>
+    // Set Grammar to be first clicked
+    $('#grammar-head').addClass("criteria-header-clicked");
+    
+
+    let ratings = [{'criteria': 'plagiarism', 'rating': 0, 'comments': ''}, {'criteria': 'grammar', 'rating': 0, 'comments': ''}];
+
+    // Get request to database
+    function getData() {
+        temp = [];
+        $.ajax({
+            async: false,
+            url: "{% url 'get_data' %}",
+            method: "GET",
+            dataType: 'json',
+            success: function (response) {
+                temp = response;
+            }
+        });
+        return temp;
+    }
+    data = getData();
+    data_plagiarism_score = data.plagiarism_score;
+
+    // Clean string list data_plagiarised words
+    data_plagiarised_words = data.plagiarised_words;
+    data_plagiarised_words = data_plagiarised_words.replace(/'/g, '"');
+    data_plagiarised_words = JSON.parse(data_plagiarised_words);
+
+    let plagiarised_words = data_plagiarised_words;
+
+
+
+    // Update object ratings
+    // Plagiarism
+    ratings[0].rating = data_plagiarism_score;
+    ratings[0].comments = '{{essay}}';
+    console.log(ratings)
+
+    
+    // Criteria header click toggle
+    $('.criteria-header').on('click', function(e) {
+        // Reset criteria header clicked
+        $('.criteria-header').removeClass('criteria-header-clicked');
+
+        var buttonClicked = e.target.id;
+        var selector = "#" + `${buttonClicked}`;
+
+        $(selector).addClass('criteria-header-clicked');
+
+        // Set to criteria buttons
+        updateContent(buttonClicked);
+
+        // Get average and set average 
+        var temp = 0;
+        for (var x = 0; x < ratings.length; x++) {
+            temp += ratings[x].rating;
+        }
+        var average = Math.round(temp/ratings.length);
+        console.log('Average: ',average);
+        $('.average-score-js').html(average);
+    });
+
+
+    function updateContent(buttonClicked) {
+        buttonClicked = buttonClicked.split('-')[0];
+        console.log(buttonClicked);
+
+        var rating = 0;
+        var comments = '';
+        var remarks = '';
+        // Find criteria in data, set to variables
+        for (var x = 0; x < ratings.length; x++) {
+            if (ratings[x].criteria == buttonClicked) {
+                rating = ratings[x].rating;
+                comments = ratings[x].comments;
+            }
+        }
+        // Update results content
+        if (rating <= 20) {
+            remarks = 'Poor';
+        } else if (rating <= 40) {
+            remarks = 'Fair';
+        } else if (rating <= 60) {
+            remarks = 'Good';
+        } else if (rating <= 80) {
+            remarks = 'Very Good';
+        } else {
+            remarks = 'Excellent';
+        }
+
+        $('.rating-word-js').html(remarks);
+        $('.rating-number-js').html(rating);
+        $('.comment-word').html(comments);
+
+        if (buttonClicked == 'plagiarism') {
+            // Plagiarism is clicked
+            if (rating <= 10) {
+                remarks = 'Excellent';
+            } else if (rating <= 20) {
+                remarks = 'Very Good';
+            } else if (rating <= 30) {
+                remarks = 'Good';
+            } else if (rating <= 40) {
+                remarks = 'Fair';
+            } else {
+                remarks = 'Poor';
+            }
+            $('.rating-word-js').html(remarks);
+            // Highlighter
+            const highlight = (needle, haystack) =>
+                haystack.replace(
+                    new RegExp('\\b' + needle + '\\b', 'i'),
+                    (str) => `<mark>${str}</mark>`
+            );
+            console.log(plagiarised_words);
+            
+            var essay = $('.comment-word').html();
+            for (x = 0; x < plagiarised_words.length; x++) {
+                essay = highlight(plagiarised_words[x], essay)
+                essay = essay.replace(new RegExp("\\b"+'</mark> <mark>'+"\\b", 'g'), " ");
+                console.log(essay);
+            }
+            $('.comment-word').html(
+                `<div class='comment-word-head'>Your essay is ${rating}% plagiarized, and this is ${remarks.toLowerCase()}. Your essay with the highlighted plagiarised words are shown down below.</div>
+                <div>${essay}</div>
+                `);
+        }
+
+        // Update progress bar
+        $(':root').css('--percent', rating+'%');
+        $('.progress-bar').removeClass('run-animation');
+        setTimeout(function() {
+            $('.progress-bar').addClass("run-animation");
+        },1);
+    }
+
+
+</script>
+
+
+{% endblock content %}

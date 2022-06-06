@@ -2,262 +2,272 @@
 {% load static %}
 
 {% block content %}
-    
-<div class="essay-critera-container">
-    <div class="topic-essay-container">
-        <div class="topic-container">
-            <div id='editable' class="textbox-topic" contenteditable=true placeholder="Enter the topic of your essay. Include as many keywords as possible."></div>
-        </div>
 
-        <div class="essay-container">
-            {% csrf_token %}
-            <div id='editable2' class="textbox" contenteditable=true placeholder="Enter your essay here by writing or pasting it, then press the 'Score Essay' button to have Gradesy grade it."></div>
-            
-            <div class="word-counter-button-container">
-                <div class="words-js">0 word</div>
-                <div class="button disabled">Score Essay</div>
+
+<div class="container">
+    {% include 'navbar.html' %}
+    {% csrf_token %}
+    <section class="step-one">
+        <div>
+            <div>
+                <img src="{% static 'images/triangle-1.svg' %}" draggable="false">
+            </div>
+            <div>
+                <textarea class="form-input-multi form-topic" name="topic" placeholder="Type or paste your topic here..."></textarea>
             </div>
         </div>
+        
+        <img src="{% static 'images/person-1.svg' %}" draggable="false">
+    </section>
+
+    <section class="step-two">
+        <img src="{% static 'images/person-2.svg' %}" draggable="false">
+        <div class="textarea-essay-container">
+            <textarea class="form-input-multi form-essay" name="essay" placeholder="Type or paste your essay here..."></textarea>
+            <div class="word-count">0 word</div>
+        </div>
+    </section>
+
+    <section class="step-three">
+        <img src="{% static 'images/triangle-2.svg' %}" draggable="false">
+        
+        <div class="criteria-column">
+            <div class="criteria-row">
+                <div class="button-container">
+                    <div class="button-hover-background" style="background-color: var(--primary); width: 210px;">
+                        <div id="grammar" class="button criteria-button">
+                            <div>Grammar</div>
+                            <div class="percentage-container"><span>0</span>%</div>
+                        </div>
+                    </div>    
+                </div>
+                <div class="button-container">
+                    <div class="button-hover-background" style="background-color: var(--primary); width: 210px;">
+                        <div id="style" class="button criteria-button">
+                            <div>Style</div>
+                            <div class="percentage-container"><span>0</span>%</div>
+                        </div>
+                    </div>    
+                </div>
+            </div>
+
+            <div class="criteria-row">
+                <div class="button-container">
+                    <div class="button-hover-background" style="background-color: var(--primary); width: 210px;">
+                        <div id="mechanics" class="button criteria-button">
+                            <div>Mechanics</div>
+                            <div class="percentage-container"><span>0</span>%</div>
+                        </div>
+                    </div>    
+                </div>
+                <div class="button-container">
+                    <div class="button-hover-background" style="background-color: var(--primary); width: 210px;">
+                        <div id="plagiarism" class="button criteria-button">
+                            <div>Plagiarism</div>
+                            <div class="percentage-container"><span>0</span>%</div>
+                        </div>
+                    </div>    
+                </div>
+            </div>
+
+            <div class="criteria-row">
+                <div class="button-container">
+                    <div class="button-hover-background" style="background-color: var(--primary); width: 210px;">
+                        <div id="content" class="button criteria-button">
+                            <div>Content</div>
+                            <div class="percentage-container"><span>0</span>%</div>
+                        </div>
+                    </div>    
+                </div>
+                <div class="button-container">
+                    <div class="button-hover-background" style="background-color: var(--primary); width: 210px;">
+                        <div id="vocabulary" class="button criteria-button">
+                            <div>Vocabulary</div>
+                            <div class="percentage-container"><span>0</span>%</div>
+                        </div>
+                    </div>    
+                </div>
+            </div>
+
+            <div class="percentage-input-container">
+                <div>Give a percentage value:</div>
+                <div class="form-input-container form-input-disabled">
+                    <div class="form-percentage-container">%</div>
+                    <input type="text" class="form-input" maxlength="3" onkeypress="validateNum(event)" placeholder="Select a criteria">
+                    <div>100% left</div>
+                </div>
+            </div>
+        </div>
+
+        <div>
+            <img src="{% static 'images/person-3.svg' %}" draggable="false">
+        </div>
+  
+    </section>
+
+
+    <div class="button-spinner-container hide">
+        <div class="button-spinner-hover-background" style="background-color: var(--primary); width: 600px;">
+            <div class="button-spinner">
+                <div class="spinner"></div>
+            </div>
+        </div>    
     </div>
 
-    
-    <div class="criteria-container" style="display: none">
-        <div class="criteria-name-score-container">
-            <div class="name-question-container">
-                <div>CONTENT</div>
-                <div class="tooltip">
-                    <img src="{% static 'images/help.svg' %}">
-                    <div class="tooltip-text">Relevance of the essay to the topic</div>
-                </div>
-            </div>
-            <div class="content-score-js"></div>
-        </div>
-        <div class="bar-container">
-            <div class="bar-content"></div>
-        </div>
-    
-        <div class="criteria-name-score-container">
-            <div class="name-question-container">
-                <div>MECHANICS</div>
-                <div class="tooltip">
-                    <img src="{% static 'images/help.svg' %}">
-                    <div class="tooltip-text">Spelling and essay general statistics</div>
-                </div>
-            </div>
-            <div class="mechanics-score-js"></div>
-        </div>
-        <div class="bar-container">
-            <div class="bar-mechanics"></div>
-        </div>
-    
-        <div class="criteria-name-score-container">
-            <div class="name-question-container">
-                <div>LANGUAGE USE</div>
-                <div class="tooltip">
-                    <img src="{% static 'images/help.svg' %}">
-                    <div class="tooltip-text">Complex constructions and grammar</div>
-                </div>
-            </div>
-            <div class="grammar-score-js"></div>
-        </div>
-        <div class="bar-container">
-            <div class="bar-grammar"></div>
-        </div>
-    
-        <div>FINAL GRADE</div>
-    
-        <div class="circle-wrap">
-            <div class="circle">
-                <div class="mask full">
-                    <div class="fill"></div>
-                </div>
-                <div class="mask half">
-                    <div class="fill"></div>
-                </div>
-                <div class="inside-circle"> 
-                    <div class="final-grade-js"></div>
-                    <div></div>
-                    <div>100</div>
-                </div>
-            </div>
-        </div>
-    
+    <div class="button-container check-essay-js">
+        <div class="button-hover-background" style="background-color: var(--primary); width: 600px;">
+            <div class="button primary-button check-essay-js">Check essay</div>
+        </div>    
     </div>
 
-
-    <div class="criteria-container-skeleton" style="display: block">
-        <div class="row-between">
-            <div></div>
-            <div></div>
-        </div>
-        <div class="row-bar"></div>
-
-        <div class="row-between">
-            <div></div>
-            <div></div>
-        </div>
-        <div class="row-bar"></div>
-
-        <div class="row-between">
-            <div></div>
-            <div></div>
-        </div>
-        <div class="row-bar"></div>
-
-        <div></div>
-        <div class="circle-wrap-skeleton">
-            <div class="inside-circle-skeleton">
-                <div class="grade-skeleton"></div>
-                <div></div>
-                <div class="grade-skeleton"></div>
-            </div>
-        </div>
-    </div>
 </div>
 
 <script>
-    /*
-    var editable = document.getElementById('editable');
-    var editable2 = document.getElementById('editable2');
-
-    editable.addEventListener('input', function(event) {
-        editable.innerText = event.target.innerText;
-    });
-
-    editable2.addEventListener('input', function(event) {
-        editable2.innerText = event.target.innerText;
-    });
-    */
-
-
-
-    // Count number of words as user types
-    var wordOrWords = "word";
-    $(document).keyup(function(e) {
-        var essayText = $('.textbox').text();
-
+    // Count number of words essay
+    $('.form-input-multi.form-essay').on('keyup', function() {
+        var essayText = $('.form-input-multi.form-essay').val().toString();
         var numOfWords = essayText.trim().split(/\s+/).length;
-        
-        if (numOfWords > 1) {
-            wordOrWords = "words";
-        } else {
-            wordOrWords = "word";
-        }
 
-        if (essayText == '') {
+        if (!essayText.trim().length) {
             numOfWords = 0;
         }
-        $('.words-js').html(numOfWords + ' ' + wordOrWords);
+        console.log('Num of words: ', numOfWords);
 
-        // Check if there are text inputs already
-        if ($('.textbox').text() != "" && $('.textbox-topic').text() != "") {
-            // Enable button
-            $('.button').removeClass('disabled');
+        if (numOfWords > 0) {
+            $('.word-count').text(numOfWords + " words");
         } else {
-            // Disbale button
-            $('.button').addClass('disabled');
+            $('.word-count').text(numOfWords + " word");
+        }
+    });
+    
+    let selector = '';
+    // Criteria button
+    $('.button.criteria-button').on('click', function(e) {
+        // Enable form input
+        $('.form-input-container').removeClass('form-input-disabled');
+
+        var buttonClicked = e.target.id;
+        selector = "#" + `${buttonClicked}`;
+
+        // remove class clicked for all buttons
+        $('.button.criteria-button').removeClass('criteria-button-clicked');
+        // then add class for one only
+        $(selector).addClass('criteria-button-clicked');
+
+        // update value of form input
+        var value = $(selector).children().last().children('span').text();
+        $('.form-input').val(value);
+    });
+
+
+    // On keypress of form input 
+    $('.form-input').on('input', function(e) {
+        // Change placeholder value
+        $('.form-input').attr('placeholder', '0');
+
+        // Get value
+        var formInputValue = this.value;
+
+        // If none, set value to 0
+        if (formInputValue === '') {
+            formInputValue = '0';
+        } 
+        // Convert to Int
+        formInputValue = parseInt(formInputValue);
+        $(selector).children().last().children('span').text(formInputValue);
+
+
+        // Calcualte total percent
+        var grammarVal = parseInt($("#grammar").children().last().children('span').text());
+        var mechanicsVal = parseInt($("#mechanics").children().last().children('span').text());
+        var contentVal = parseInt($("#content").children().last().children('span').text());
+        var styleVal = parseInt($("#style").children().last().children('span').text());
+        var plagiarismVal = parseInt($("#plagiarism").children().last().children('span').text());
+        var vocabularyVal = parseInt($("#vocabulary").children().last().children('span').text());
+        
+        let criteriaTotalPercent = grammarVal + mechanicsVal + contentVal + styleVal + plagiarismVal + vocabularyVal;
+
+
+        // If input is less than 100, and criteriaTotalPercent fits 100 percent
+        if (formInputValue <= 100 && (100-criteriaTotalPercent) >= 0) {
+            $(selector).children().last().children('span').text(formInputValue);
+
+            leftPercent = 100 - criteriaTotalPercent;
+            $('.form-input-container').children().last().text(leftPercent + "% left");
+
+            $('.form-input-container').removeClass('form-input-disabled');
+
+            if (formInputValue == 100) {
+                $('.form-input-container').addClass('form-input-disabled');
+            }
+        } else {
+            // slice last digit 
+            $('.form-input').val($('.form-input').val().slice(0, -1));
+
+            formInputValue = this.value;
+
+            if (formInputValue === '') {
+                formInputValue = '0';
+            } 
+
+            $(selector).children().last().children('span').text(formInputValue);
+            $('.form-input-container').addClass('form-input-disabled');
         }
     });
 
-    ///////////////////////////////////////////////////////
 
-    root = document.documentElement;
+    // Check Essay button
+    $('.button.primary-button').on('click', function() {
+        $('.check-essay-js').addClass('hide');
+        $('.button-spinner-container').removeClass('hide');
 
-    var mechanicsScore = 0;
-    var contentScore = 0;
-    var grammarScore = 0;
+        setTimeout(function() {
+        checkEssay();
+     
+        // Reset back the buttons
+        $('.check-essay-js').removeClass('hide');
+        $('.button-spinner-container').addClass('hide');
+        },1);
+    });
 
-    $('.button').click(function() {
-        // If no input, stop execution of function
-        if ($('.textbox-topic').html() === "") {
-            return;
-        }
-
-        if ($('.textbox').html() === "") {
-            return;
-        }
-
-
-        // Continue execution
-        // Send topic and essay to backend
-        var topic= $('.textbox-topic').text();
-        var essay = $('.textbox').text();
-
-        console.log(essay);
-
+    function checkEssay() {
+        // Send data to backend, and get results in response
+        var essay = $('.form-input-multi.form-essay').val().toString();
+        var temp = [];
         $.ajax({
-            url: "{% url 'process_essay' %}",
+            async: false,
+            url: "{% url 'check_essay' %}",
             method: "POST",
-            data: {'topic': topic, 'essay': essay, csrfmiddlewaretoken: '{{ csrf_token }}'},
-            success: function(response) {
-                //alert('input sent successfully')
-                // Get score from backend to frontend
-                $.ajax({
-                    url: "{% url 'get_score' %}",
-                    method: "GET",
-                    dataType: 'json',
-                    success: function(response) {
-                        mechanicsScore = response[0];
-                        contentScore = response[2];
-                        grammarScore = response[1];
-                    
-                        //alert("Done");
-                        // Criteria Grade
-                         $('.mechanics-score-js').html((mechanicsScore + "/100"));
-                         root.style.setProperty('--bar-mechanics', mechanicsScore + "%");
-
-                         $('.content-score-js').html((contentScore + "/100"));
-                         root.style.setProperty('--bar-content', contentScore + "%");
-
-                         $('.grammar-score-js').html((grammarScore + "/100"));
-                         root.style.setProperty('--bar-grammar', grammarScore + "%");
-
-                         // Final Grade
-                         avgScores = Math.ceil(((mechanicsScore + contentScore + grammarScore)/3));
-                         $('.final-grade-js').html((avgScores));
-
-                         degree = (((avgScores/100)*360)/2);
-                         root.style.setProperty('--degree', degree + "deg"); 
-
-                         updateGrade();
-                    },  
-                    error: function(err) {
-                        console.log(err);
-                    }
-                });
+            data: {
+                'csrfmiddlewaretoken': $("input[name=csrfmiddlewaretoken]").val(),
+                'essay': essay,
             },
-            error: function(err) {
-                console.log(err);
+            dataType: 'json',
+            success: function (response) {
+                // Go to next url
+                 window.location.href = '/results';
             }
         });
-
-        // Start criteria card blinker
-        root.style.setProperty('--blinker-zero', '#fdfdfd');
-        root.style.setProperty('--blinker-hundred', '#f5f5f5');
+    }
 
 
-        // Replace button text with spinner
-        $('.button').html(
-            `<div class="spinner"></div>`
-        );
+    // Number input only for percentage
+    function validateNum(e) {
+        var theEvent = e || window.event;
 
-        $('.criteria-container-skeleton').css("display", "block");
-        $('.criteria-container').css("display", "none");
-
-    }); // End button click
-
-
-    function updateGrade() {
-        // Load grade
-        $('.criteria-container-skeleton').css("display", "none");
-        $('.criteria-container').css("display", "block");
-
-        // Replace spinner with text
-        $('.button').html('Score Essay');
-
-        // End criteria card blinker
-        root.style.setProperty('--blinker-zero', '#f5f5f5');
-        root.style.setProperty('--blinker-hundred', '#f5f5f5');
+        // Handle paste
+        if (theEvent.type === 'paste') {
+            key = event.clipboardData.getData('text/plain');
+        } else {
+        // Handle key press
+            var key = theEvent.keyCode || theEvent.which;
+            key = String.fromCharCode(key);
+        }
+        var regex = /[0-9]|\./;
+        if( !regex.test(key) ) {
+            theEvent.returnValue = false;
+            if(theEvent.preventDefault) theEvent.preventDefault();
+        }
     }
 
 </script>
