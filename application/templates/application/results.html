@@ -39,17 +39,51 @@
         </div>
 
         <div class="results-average">
-            <div style="margin-bottom: 25px; margin-left: 8px;">The essay's grade is</div>
-            <div class="flag-container">
-                <div class="average-grade-container">
-                    <div class="average-grade-container-two">
-                        <div class="average-grade"><span class="average-score-js">96</span>%</div>
-                        <img src="{% static 'images/flagpole.svg' %}" draggable="false" style="display: block;">
+            <div>
+                <div style="margin-bottom: 25px; margin-left: 8px;">The essay's grade is</div>
+                <div class="flag-container">
+                    <div class="average-grade-container">
+                        <div class="average-grade-container-two">
+                            <div class="average-grade"><span class="average-score-js">96</span></div>
+                            <img src="{% static 'images/flagpole.svg' %}" draggable="false" style="display: block;">
+                        </div>
                     </div>
+                    <img src="{% static 'images/triangle-3.svg' %}" draggable="false">
                 </div>
-                <img src="{% static 'images/triangle-3.svg' %}" draggable="false">
+            </div>
+
+            <div class="arrow-container">
+                <div class="run">
+                    <img src="{% static 'images/arrow.svg' %}" draggable="false" title="Show breakdown">
+                </div>
+            </div>
+
+           
+            <div class="breakdown-container hide">
+                <div class="breakdown-col">
+                    <div class="breakdown-row">
+                        <div><span>Grammar</span> = <span class="break-score-g">90</span>% x (<span class="break-value-g">20</span>%) = <span class="break-compute-g">18</span></div>
+                    </div>
+                    <div class="breakdown-row">
+                        <div><span>Mechanics</span> = <span class="break-score-m">90</span>% x (<span class="break-value-m">20</span>%) = <span class="break-compute-m">18</span></div>
+                    </div>
+                    <div class="breakdown-row">
+                        <div><span>Content</span> = <span class="break-score-c">90</span>% x (<span class="break-value-c">20</span>%) = <span class="break-compute-c">18</span></div>
+                    </div>
+                    <div class="breakdown-row">
+                        <div><span>Style</span> = <span class="break-score-s">90</span>% x (<span class="break-value-s">20</span>%) = <span class="break-compute-s">18</span></div>
+                    </div>
+                    <div class="breakdown-row">
+                        <div><span>Plagiarism</span> = <span class="break-score-p">90</span>% x (<span class="break-value-p">20</span>%) = <span class="break-compute-p">18</span></div>
+                    </div>
+                    <div class="breakdown-row">
+                        <div><span>Vocabulary</span> = <span class="break-score-v">90</span>% x (<span class="break-value-v">20</span>%) = <span class="break-compute-v">18</span></div>
+                    </div>
+        
+                </div>
             </div>
         </div>
+
 
         <div class="button-container">
             <div class="button-hover-background" style="background-color: var(--primary); width: 600px;">
@@ -62,11 +96,7 @@
 </div>
 
 <script>
-    // Set Grammar to be first clicked
-    $('#grammar-head').addClass("criteria-header-clicked");
-    
-
-    let ratings = [{'criteria': 'plagiarism', 'rating': 0, 'comments': ''}, {'criteria': 'grammar', 'rating': 0, 'comments': ''}];
+    let ratings = [{'criteria': 'grammar', 'rating': 0, 'comments': ''}, {'criteria': 'mechanics', 'rating': 0, 'comments': ''}, {'criteria': 'content', 'rating': 0, 'comments': ''}, {'criteria': 'style', 'rating': 0, 'comments': ''}, {'criteria': 'plagiarism', 'rating': 0, 'comments': ''}, {'criteria': 'vocabulary', 'rating': 0, 'comments': ''}];
 
     // Get request to database
     function getData() {
@@ -83,25 +113,84 @@
         return temp;
     }
     data = getData();
-    data_plagiarism_score = data.plagiarism_score;
+    let grammar_score = data.grammar_score;
+    let grammar_matches = JSON.parse((data.grammar_matches).replace(/'/g, '"'));
 
-    // Clean string list data_plagiarised words
-    data_plagiarised_words = data.plagiarised_words;
-    data_plagiarised_words = data_plagiarised_words.replace(/'/g, '"');
-    data_plagiarised_words = JSON.parse(data_plagiarised_words);
+    let mechanics_score = data.mechanics_score;
+    let mechanics_words = data.mechanics_words;
 
-    let plagiarised_words = data_plagiarised_words;
+    let content_score = data.content_score;
+    let content_words = JSON.parse((data.content_words).replace(/'/g, '"'));
 
+    let style_score = data.style_score;
+    let style_expressions  = JSON.parse((data.style_expressions).replace(/'/g, '"'));
 
+    let plagiarism_score = data.plagiarism_score;
+    let plagiarised_words = JSON.parse((data.plagiarised_words).replace(/'/g, '"'));
 
-    // Update object ratings
+    let vocabulary_score = data.lexical_complexity_score;
+    let vocabulary_words = JSON.parse((data.lexical_complexity_words).replace(/'/g, '"'));
+
+    // UPDATE OBJECT RATINGS
+    // Grammar
+    ratings[0].rating = grammar_score;
+    ratings[0].comments = grammar_matches;
+    // Mechanics
+    ratings[1].rating = mechanics_score;
+    ratings[1].comments = mechanics_words;
+    // Content
+    ratings[2].rating = content_score;
+    ratings[2].comments = content_words;
+    // Style
+    ratings[3].rating = style_score;
+    ratings[3].comments = style_expressions;
     // Plagiarism
-    ratings[0].rating = data_plagiarism_score;
-    ratings[0].comments = '{{essay}}';
-    console.log(ratings)
+    ratings[4].rating = plagiarism_score;
+    ratings[4].comments = `{{essay}}`;
+    // Vocabulary
+    ratings[5].rating = vocabulary_score;
+    ratings[5].comments = vocabulary_words;
 
+    console.log('Ratings:', ratings);
+
+    // Compute essay's final grade
+    let finalGrade = (ratings[0].rating*'{{grammar_val}}') + (ratings[1].rating*'{{mechanics_val}}') + (ratings[2].rating*'{{content_val}}') + (ratings[3].rating*'{{style_val}}') + ((100 - ratings[4].rating)*'{{plagiarism_val}}') + (ratings[5].rating*'{{vocabulary_val}}');
+    $('.average-score-js').html(Math.round(finalGrade));
+
+    $('.results-average').css('justify-content', 'center');
+    // Breakdown
+    $('.break-score-g').html(ratings[0].rating);
+    $('.break-score-m').html(ratings[1].rating);
+    $('.break-score-c').html(ratings[2].rating);
+    $('.break-score-s').html(ratings[3].rating);
+    $('.break-score-p').html(100-ratings[4].rating);
+    $('.break-score-v').html(ratings[5].rating);
+    $('.break-value-g').html('{{grammar_val}}'*100);
+    $('.break-value-m').html('{{mechanics_val}}'*100);
+    $('.break-value-c').html('{{content_val}}'*100);
+    $('.break-value-s').html('{{style_val}}'*100);
+    $('.break-value-p').html('{{plagiarism_val}}'*100);
+    $('.break-value-v').html('{{vocabulary_val}}'*100);
+
+    $('.break-compute-g').html(Math.round('{{grammar_val}}'*ratings[0].rating));
+    $('.break-compute-m').html(Math.round('{{mechanics_val}}'*ratings[1].rating));
+    $('.break-compute-c').html(Math.round('{{content_val}}'*ratings[2].rating));
+    $('.break-compute-s').html(Math.round('{{style_val}}'*ratings[3].rating));
+    $('.break-compute-p').html(Math.round('{{plagiarism_val}}'*(100-ratings[4].rating)));
+    $('.break-compute-v').html(Math.round('{{vocabulary_val}}'*ratings[5].rating));
+
+    $('.run').on('click', function() {
+        $('.arrow-container').addClass('hide');
+        $('.results-average').css('justify-content', 'space-between');
+        $('.breakdown-container').removeClass('hide');
+    });
     
-    // Criteria header click toggle
+    
+    // Set Grammar to be first clicked
+    $('#grammar-head').addClass("criteria-header-clicked");
+    updateContent('grammar-head');
+
+    // Any criteria header clicked
     $('.criteria-header').on('click', function(e) {
         // Reset criteria header clicked
         $('.criteria-header').removeClass('criteria-header-clicked');
@@ -110,29 +199,20 @@
         var selector = "#" + `${buttonClicked}`;
 
         $(selector).addClass('criteria-header-clicked');
-
         // Set to criteria buttons
         updateContent(buttonClicked);
-
-        // Get average and set average 
-        var temp = 0;
-        for (var x = 0; x < ratings.length; x++) {
-            temp += ratings[x].rating;
-        }
-        var average = Math.round(temp/ratings.length);
-        console.log('Average: ',average);
-        $('.average-score-js').html(average);
     });
 
 
+    // Start updateContent
     function updateContent(buttonClicked) {
         buttonClicked = buttonClicked.split('-')[0];
         console.log(buttonClicked);
 
         var rating = 0;
-        var comments = '';
+        var comments = null;
         var remarks = '';
-        // Find criteria in data, set to variables
+        // Find criteria in ratings, set to variables
         for (var x = 0; x < ratings.length; x++) {
             if (ratings[x].criteria == buttonClicked) {
                 rating = ratings[x].rating;
@@ -154,10 +234,17 @@
 
         $('.rating-word-js').html(remarks);
         $('.rating-number-js').html(rating);
-        $('.comment-word').html(comments);
+        //$('.comment-word').html(comments);
 
+        // Update progress bar
+        $(':root').css('--percent', rating+'%');
+        $('.progress-bar').removeClass('run-animation');
+        setTimeout(function() {
+            $('.progress-bar').addClass("run-animation");
+        },1);
+
+        // Plagiarism is clicked
         if (buttonClicked == 'plagiarism') {
-            // Plagiarism is clicked
             if (rating <= 10) {
                 remarks = 'Excellent';
             } else if (rating <= 20) {
@@ -176,27 +263,190 @@
                     new RegExp('\\b' + needle + '\\b', 'i'),
                     (str) => `<mark>${str}</mark>`
             );
-            console.log(plagiarised_words);
-            
-            var essay = $('.comment-word').html();
-            for (x = 0; x < plagiarised_words.length; x++) {
+            //Get essay
+            let essay = `{{essay}}`;
+            console.log("the essay is", essay);
+            // Highlight plagiarised words if meron
+            for (var x = 0; x < plagiarised_words.length; x++) {
                 essay = highlight(plagiarised_words[x], essay)
                 essay = essay.replace(new RegExp("\\b"+'</mark> <mark>'+"\\b", 'g'), " ");
-                console.log(essay);
             }
             $('.comment-word').html(
-                `<div class='comment-word-head'>Your essay is ${rating}% plagiarized, and this is ${remarks.toLowerCase()}. Your essay with the highlighted plagiarised words are shown down below.</div>
-                <div>${essay}</div>
+                `<div style='margin-right: 10px;'>
+                    <div class='comment-word-head'>Your essay is ${rating}% plagiarized, and this is ${remarks.toLowerCase()}. Your essay with the highlighted plagiarised words are shown down below.</div>
+                    <div class='comment-word-heading'>Essay:</div>
+                    <div>${essay}</div>
+                </div>
                 `);
         }
+        else if (buttonClicked == 'grammar') {
+            let tempDiv = '';
+            for(var x = 0; x < grammar_matches.length; x++) {
+                let tempReplacements = grammar_matches[x].replacements;
+                tempReplacements = tempReplacements.toString().replaceAll(',', ', ');
 
-        // Update progress bar
-        $(':root').css('--percent', rating+'%');
-        $('.progress-bar').removeClass('run-animation');
-        setTimeout(function() {
-            $('.progress-bar').addClass("run-animation");
-        },1);
+                tempDiv = tempDiv += `
+                <div class='comment-word-g' style='margin-right: 10px;'>
+                    <div><span>Mistake: </span><mark>${grammar_matches[x].context}</mark></div>
+                    <div><span>Explanation: </span>${grammar_matches[x].message}</div>
+                    <div><span>Correction: </span>${tempReplacements}</div>
+                </div>
+                `;
+            }
+            // If no errors in grammar and spelling
+            if (grammar_matches.length == 0) {
+                tempDiv = tempDiv += `
+                <div class='comment-word-g' style='margin-right: 10px;'>
+                    <div>The essay does not contain any grammatical or spelling mistakes. Outstanding job!</div>
+                </div>
+                `;
+            }
+            // Set to comment-word
+            $('.comment-word').html(tempDiv);
+        }
+        else if (buttonClicked == 'mechanics') {
+            // If essay is too short
+            if (mechanics_words < 250) {
+                $('.comment-word').html(`
+                <div class='comment-word-m' style='margin-right: 10px;'>
+                    <div>This essay is too short. It only has <mark>${mechanics_words} words</mark> in total. The advised length of essays is in the range of 250-265.</div>
+                </div>
+                `);
+            }
+            // Just right
+            else if (mechanics_words >= 250 && mechanics_words <= 265) {
+                $('.comment-word').html(`
+                <div class='comment-word-m' style='margin-right: 10px;'>
+                    <div>The essay's length is just right with <mark>${mechanics_words} words</mark>! Nothing to improve here.</div>
+                </div>
+                `);
+            }
+            // If essay is too long
+            else if (mechanics_words > 265) {
+                $('.comment-word').html(`
+                <div class='comment-word-m' style='margin-right: 10px;'>
+                    <div>The essay is too long with <mark>${mechanics_words} words</mark>. The advised length of essays is in the range of 250-265.</div>
+                </div>
+                `);
+            }
+        }
+        else if (buttonClicked == 'content') {
+            let tempDiv = '';
+            for (x=0; x < content_words.length; x++) {
+                tempDiv += `<div>${content_words[x]}</div>`;
+            }
+            $('.comment-word').html(`
+            <div class='comment-word-c' style='margin-right: 10px;'>
+                <div>The relevance of the essay to the topic was determined by the following base or dictionary form of words from the topic. The essay's content score of ${rating}% shows just how well or bad the essay answered the given task.</div>
+                <div class='comment-word-heading'>Keywords:</div>
+                ${tempDiv}
+            </div>
+            `);
+
+        }
+        else if (buttonClicked == 'style') {
+            // Non-duplicate expressions
+            let uniqueExpressions = [];
+            $.each(style_expressions, function(i, el){
+                if($.inArray(el, uniqueExpressions) === -1) uniqueExpressions.push(el);
+            });
+            console.log(uniqueExpressions);
+            // Good amount of uniqueExpressions
+            if (uniqueExpressions.length > 3) {
+                $('.comment-word').html(`
+                <div class='comment-word-s' style='margin-right: 10px;'>
+                    <div>The essay contains a good amount of linking expressions. This shows coherence in the essay without overusing a handful of linking expressions.</div>
+                    <div class='comment-word-heading'>Essay:</div>
+                    <div class='comment-word-s-essay'></div>
+                </div>
+                `);
+                // Highlight in essay
+                let essay = `{{essay}}`;
+                // Highlighter
+                const highlight = (needle, haystack) =>
+                    haystack.replace(
+                        new RegExp('\\b' + needle + '\\b', 'gi'),
+                        (str) => `<mark>${str}</mark>`
+                );
+                for (x = 0; x < uniqueExpressions.length; x++) {
+                    essay = highlight(uniqueExpressions[x], essay);
+                }
+                $('.comment-word-s-essay').html(essay);
+            }
+            // Bad amount of uniqueExpressions
+            else {
+                $('.comment-word').html(`
+                <div class='comment-word-s' style='margin-right: 10px;'>
+                    <div>The essay contains a low number of linking expressions. You may consider adding more in order to tell readers how a part of your text is connected to other parts.</div>
+                    <div class='comment-word-heading'>Essay:</div>
+                    <div class='comment-word-s-essay'></div>
+                </div>
+                `);
+                // Highlight in essay
+                let essay = `{{essay}}`;
+                // Highlighter
+                const highlight = (needle, haystack) =>
+                    haystack.replace(
+                        new RegExp('\\b' + needle + '\\b', 'gi'),
+                        (str) => `<mark>${str}</mark>`
+                );
+                for (x = 0; x < uniqueExpressions.length; x++) {
+                    essay = highlight(uniqueExpressions[x], essay);
+                }
+                $('.comment-word-s-essay').html(essay);
+            }
+        }
+        else if (buttonClicked == 'vocabulary') {
+            // Too many repeated words 10 above
+            if (vocabulary_words.length >= 10) {
+                $('.comment-word').html(`
+                <div class='comment-word-v' style='margin-right: 10px;'>
+                    <div>Too many the of the same words were repeated all throughout the essay. Try changing up other repeated words into their synonyms. Such words are highlighted down below.</div>
+                    <div class='comment-word-heading'>Essay:</div>
+                    <div class='comment-word-v-essay'></div>
+                </div>
+                `);
+            } 
+            // Just right
+            else if (vocabulary_words.length < 10 && vocabulary_words.length >= 5) {
+                $('.comment-word').html(`
+                <div class='comment-word-v' style='margin-right: 10px;'>
+                    <div>Nice! There were not a lot of repeated words found in the essay.</div>
+                    <div class='comment-word-heading'>Essay:</div>
+                    <div class='comment-word-v-essay'></div>
+                </div>
+                `);
+            }
+            // Amazing
+            else if (vocabulary_words.length < 5) {
+                $('.comment-word').html(`
+                <div class='comment-word-v' style='margin-right: 10px;'>
+                    <div>The essay's vocabulary usage is commendable. There were few or no repeated words. Keep it up!</div>
+                    <div class='comment-word-heading'>Essay:</div>
+                    <div class='comment-word-v-essay'></div>
+                </div>
+                `);
+            }
+            // Highlight in essay
+            let essay = `{{essay}}`;
+            // Highlighter
+            const highlight = (needle, haystack) =>
+                haystack.replace(
+                    new RegExp('\\b' + needle + '\\b', 'gi'),
+                    (str) => `<mark>${str}</mark>`
+            );
+            for (x = 0; x < vocabulary_words.length; x++) {
+                essay = highlight(vocabulary_words[x], essay);
+            }
+            $('.comment-word-v-essay').html(essay);
+           
+        }
     }
+    // End updateContent
+
+    $('.button.primary-button').on('click', function() {
+        window.location.href = '/';
+    });
 
 
 </script>

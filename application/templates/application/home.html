@@ -120,6 +120,8 @@
         </div>    
     </div>
 
+    <div class="text-validation hide"></div>
+
 </div>
 
 <script>
@@ -159,7 +161,13 @@
         $('.form-input').val(value);
     });
 
-
+    let grammarVal = 0;
+    let mechanicsVal = 0;
+    let contentVal = 0;
+    let styleVal = 0;
+    let plagiarismVal = 0;
+    let vocabularyVal = 0;
+    
     // On keypress of form input 
     $('.form-input').on('input', function(e) {
         // Change placeholder value
@@ -178,12 +186,12 @@
 
 
         // Calcualte total percent
-        var grammarVal = parseInt($("#grammar").children().last().children('span').text());
-        var mechanicsVal = parseInt($("#mechanics").children().last().children('span').text());
-        var contentVal = parseInt($("#content").children().last().children('span').text());
-        var styleVal = parseInt($("#style").children().last().children('span').text());
-        var plagiarismVal = parseInt($("#plagiarism").children().last().children('span').text());
-        var vocabularyVal = parseInt($("#vocabulary").children().last().children('span').text());
+        grammarVal = parseInt($("#grammar").children().last().children('span').text());
+        mechanicsVal = parseInt($("#mechanics").children().last().children('span').text());
+        contentVal = parseInt($("#content").children().last().children('span').text());
+        styleVal = parseInt($("#style").children().last().children('span').text());
+        plagiarismVal = parseInt($("#plagiarism").children().last().children('span').text());
+        vocabularyVal = parseInt($("#vocabulary").children().last().children('span').text());
         
         let criteriaTotalPercent = grammarVal + mechanicsVal + contentVal + styleVal + plagiarismVal + vocabularyVal;
 
@@ -216,24 +224,37 @@
     });
 
 
-    // Check Essay button
+    // Check Essay button clicked
     $('.button.primary-button').on('click', function() {
-        $('.check-essay-js').addClass('hide');
-        $('.button-spinner-container').removeClass('hide');
+        inputTopic = $('.form-input-multi.form-topic').val().toString();
+        inputEssay = $('.form-input-multi.form-essay').val().toString();
+        percentLeft = $('.form-input-container > div:last-child').text();
 
-        setTimeout(function() {
-        checkEssay();
-     
-        // Reset back the buttons
-        $('.check-essay-js').removeClass('hide');
-        $('.button-spinner-container').addClass('hide');
-        },1);
+        // If inputs have inputs, check essay
+        if (!inputTopic.trim().length || !inputEssay.trim().length) {
+            $('.text-validation').html('Fill up the topic and essay fields.');
+            $('.text-validation').removeClass('hide');
+        } 
+        else if (percentLeft != '0% left') {
+            $('.text-validation').html('Make sure all percentage are distributed.');
+            $('.text-validation').removeClass('hide');
+        }
+        else {
+            $('.check-essay-js').addClass('hide');
+            $('.button-spinner-container').removeClass('hide');
+            $('.text-validation').addClass('hide');
+
+            setTimeout(function() {
+                checkEssay();
+            },10);
+        }
     });
 
+    // Check Essay AJAX 
     function checkEssay() {
         // Send data to backend, and get results in response
         var essay = $('.form-input-multi.form-essay').val().toString();
-        var temp = [];
+        var topic = $('.form-input-multi.form-topic').val().toString();
         $.ajax({
             async: false,
             url: "{% url 'check_essay' %}",
@@ -241,6 +262,13 @@
             data: {
                 'csrfmiddlewaretoken': $("input[name=csrfmiddlewaretoken]").val(),
                 'essay': essay,
+                'topic': topic,
+                'grammarVal': grammarVal,
+                'mechanicsVal': mechanicsVal,
+                'contentVal': contentVal,
+                'styleVal': styleVal,
+                'plagiarismVal': plagiarismVal,
+                'vocabularyVal': vocabularyVal
             },
             dataType: 'json',
             success: function (response) {
