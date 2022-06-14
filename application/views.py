@@ -122,7 +122,10 @@ def grammar(essay):
             #print(match_message)
             grammar_matches.append({'message': match.message, 'context': match.context, 'replacements': match.replacements})
 
+   # print(matches)
+   # print(grammar_matches)
     # Load grammar model
+    print('Grammar: ', len(matches))
     grammar = pickle.load(open('./ml/grammar.pkl', "rb"))
     grammar_score = grammar.predict([[len(matches)]])
     grammar_score = round(grammar_score[0])
@@ -143,7 +146,10 @@ def mechanics(essay):
     if mechanics_score > 100:
         mechanics_score = 100
 
-    print(char_count, word_count, sent_count, avg_word_length)
+    print('Char: ', char_count)
+    print('Word: ', word_count)
+    print('Sent: ', sent_count)
+    print('Avg Word Len: ', avg_word_length)
 
     return word_count, mechanics_score
 
@@ -161,6 +167,10 @@ def style(essay):
     style_score = style.predict([[noun_count, verb_count, adj_count, adv_count, linking_expressions_count]])
     style_score = round(style_score[0]*0.88)
 
+    print('Noun: ', noun_count)
+    print('Verb: ', verb_count)
+    print('Adj: ', adj_count)
+    print('Adv: ', adv_count)
     return style_expressions, style_score
 
 ''' PLAGIARISM '''
@@ -236,9 +246,7 @@ def lexical_complexity(essay):
     lexical_complexity_score = lexical_complexity.predict([[len(words_repeated)]])
     lexical_complexity_score = round(lexical_complexity_score[0])
 
-    print('Word repeated length:', len(words_repeated))
-    print('Word repeated:', words_repeated)
-
+    print('Words Repeated: ', len(words_repeated))
     return words_repeated, lexical_complexity_score
 
 
@@ -303,16 +311,18 @@ def count_pos(essay):
 
 linking_expressions = ['however', 'another', 'moreover', 'and then', 'similarly', 'also', 'in addition', 'likewise', 'as well as', 'besides', 'furthermore', 'besides this', 'in the same way', 'after this', 'then', 'at this point', 'earlier', 'later', 'to begin with', 'initially', 'following this', 'another advantage', 'one reason', 'another reason', 'a further reason', 'eventually', 'so', 'in that case', 'thus', 'consequently', 'thereby', 'therefore', 'as a result', 'admittedly', 'it follows that', 'on the other hand', 'despite', 'in spite of', 'in contrast', 'alternatively', 'although', 'on the contrary', 'instead of', 'rather', 'whereas', 'nonetheless', 'even though', 'obviously', 'certainly', 'plainly', 'undoubtedly', 'since', 'because', 'due to', 'owing to', 'leads to', 'cause of', 'in order to', 'if', 'unless', 'whether', 'provided that', 'depending on', 'in conclusion', 'in summary', 'lastly', 'finally', 'to conclude', 'to recapitulate', 'in short', 'in my opinion', 'to sum up', 'as far as im concerned', 'to my mind', 'it seems to me that']
 def count_linking_expressions(essay):
-  essay = re.sub("[^A-Za-z0-9]"," ", essay)
-  essay = nltk.word_tokenize(essay)
+    essay = re.sub("[^A-Za-z0-9]"," ", essay) # Remove puncs
+    essay = nltk.word_tokenize(essay)
 
-  count = 0
-  linking_expressions_list = []
-  for word in essay:
-    if word in linking_expressions:
-      count += 1
-      linking_expressions_list.append(word)
-  return count, linking_expressions_list
+    count = 0
+    linking_expressions_list = []
+    for word in essay:
+        if word.lower() in linking_expressions:
+            count += 1
+            linking_expressions_list.append(word.lower())
+
+    print('Linking Exp: ', len(linking_expressions_list))
+    return count, linking_expressions_list
 
 
 # Content
